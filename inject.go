@@ -2,6 +2,7 @@ package ginject
 
 import (
 	"errors"
+	"log"
 	"reflect"
 )
 
@@ -106,8 +107,14 @@ func (i *Inj) Get(name string, objPtr interface{}) error {
 			vof = vof.Elem()
 		}
 
+		if !vof.IsValid() {
+			log.Println(name + " has no valid value")
+			panic(objPtr)
+			return errors.New(name + " has no valid value")
+		}
+
 		if !vof.CanSet() {
-			return errors.New("could not set to " + vof.Kind().String() + " | " + vof.Type().String())
+			return errors.New("could not set to variable for " + name)
 		}
 
 		vof.Set(val.Elem())
@@ -150,6 +157,10 @@ func (i *Inj) Apply(ptr interface{}) error {
 		if f.CanSet() {
 
 			theTag := sf.Tag.Get("inject")
+			if theTag == "" || theTag == "-" {
+				continue
+			}
+
 			i.resolveLazy(theTag)
 
 			val, ok := i.deps[theTag]
